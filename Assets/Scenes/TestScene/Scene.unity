@@ -424,7 +424,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 0.15
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -453,7 +453,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -821,7 +821,7 @@ GameObject:
   - component: {fileID: 1190265823}
   - component: {fileID: 1190265821}
   - component: {fileID: 1190265824}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -842,9 +842,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Head: {fileID: 330585543}
   MouseSensitivity: 0.1
-  Controller: {fileID: 1190265824}
-  Gravity: -9.81
-  Velocity: {x: 0, y: 0, z: 0}
+  SlideSlopeLimit: 42
+  RunningSpeed: 0.05
+  WalkingSpeed: 0.03
+  FallingSpeed: 0.01
+  CrouchingSpeed: 0.01
+  JumpHeight: 0.03
+  Acceleration: 10
+  StandingHeight: 1.7
+  CrouchingHeight: 0.8
+  CrouchingJumpHeight: 0.015
+  CrouchingTransition: 15
 --- !u!4 &1190265823
 Transform:
   m_ObjectHideFlags: 0
@@ -882,7 +890,7 @@ CharacterController:
   serializedVersion: 3
   m_Height: 1.7
   m_Radius: 0.3
-  m_SlopeLimit: 45
+  m_SlopeLimit: 50
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001

@@ -55,12 +55,21 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""crouching"",
+                    ""type"": ""Button"",
+                    ""id"": ""d5754cfc-3e2c-47fe-9bce-61d5ba28cab1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""jumping"",
                     ""type"": ""Button"",
                     ""id"": ""9f3b9d08-319f-4a61-9194-cb5d8cf8dd59"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": ""Press"",
+                    ""interactions"": """",
                     ""initialStateCheck"": false
                 }
             ],
@@ -152,6 +161,17 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""action"": ""jumping"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f367deb3-e2f4-4a3c-b598-1aa9a1979fec"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""crouching"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -163,6 +183,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_player_moving = m_player.FindAction("moving", throwIfNotFound: true);
         m_player_looking = m_player.FindAction("looking", throwIfNotFound: true);
         m_player_running = m_player.FindAction("running", throwIfNotFound: true);
+        m_player_crouching = m_player.FindAction("crouching", throwIfNotFound: true);
         m_player_jumping = m_player.FindAction("jumping", throwIfNotFound: true);
     }
 
@@ -228,6 +249,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_player_moving;
     private readonly InputAction m_player_looking;
     private readonly InputAction m_player_running;
+    private readonly InputAction m_player_crouching;
     private readonly InputAction m_player_jumping;
     public struct PlayerActions
     {
@@ -236,6 +258,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         public InputAction @moving => m_Wrapper.m_player_moving;
         public InputAction @looking => m_Wrapper.m_player_looking;
         public InputAction @running => m_Wrapper.m_player_running;
+        public InputAction @crouching => m_Wrapper.m_player_crouching;
         public InputAction @jumping => m_Wrapper.m_player_jumping;
         public InputActionMap Get() { return m_Wrapper.m_player; }
         public void Enable() { Get().Enable(); }
@@ -255,6 +278,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @running.started += instance.OnRunning;
             @running.performed += instance.OnRunning;
             @running.canceled += instance.OnRunning;
+            @crouching.started += instance.OnCrouching;
+            @crouching.performed += instance.OnCrouching;
+            @crouching.canceled += instance.OnCrouching;
             @jumping.started += instance.OnJumping;
             @jumping.performed += instance.OnJumping;
             @jumping.canceled += instance.OnJumping;
@@ -271,6 +297,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @running.started -= instance.OnRunning;
             @running.performed -= instance.OnRunning;
             @running.canceled -= instance.OnRunning;
+            @crouching.started -= instance.OnCrouching;
+            @crouching.performed -= instance.OnCrouching;
+            @crouching.canceled -= instance.OnCrouching;
             @jumping.started -= instance.OnJumping;
             @jumping.performed -= instance.OnJumping;
             @jumping.canceled -= instance.OnJumping;
@@ -296,6 +325,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         void OnMoving(InputAction.CallbackContext context);
         void OnLooking(InputAction.CallbackContext context);
         void OnRunning(InputAction.CallbackContext context);
+        void OnCrouching(InputAction.CallbackContext context);
         void OnJumping(InputAction.CallbackContext context);
     }
 }

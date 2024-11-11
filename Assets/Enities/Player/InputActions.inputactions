@@ -33,12 +33,21 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "crouching",
+                    "type": "Button",
+                    "id": "d5754cfc-3e2c-47fe-9bce-61d5ba28cab1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "jumping",
                     "type": "Button",
                     "id": "9f3b9d08-319f-4a61-9194-cb5d8cf8dd59",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": "Press",
+                    "interactions": "",
                     "initialStateCheck": false
                 }
             ],
@@ -128,6 +137,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "jumping",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f367deb3-e2f4-4a3c-b598-1aa9a1979fec",
+                    "path": "<Keyboard>/ctrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "crouching",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
