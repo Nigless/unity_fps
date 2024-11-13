@@ -33,7 +33,7 @@ public class Player : MonoBehaviour
     private float DistanceToGround = 0;
     private float DistanceToCelling = 0;
     private Vector3 Velocity = new();
-    private bool Crouching => Input.Crouching || DistanceToGround + DistanceToCelling + Controller.radius * 2 + Controller.skinWidth < StandingHeight;
+    private bool CanStandUp => DistanceToGround + DistanceToCelling + Controller.radius * 2 > StandingHeight + Controller.skinWidth * 2;
 
     private void Awake()
     {
@@ -60,13 +60,13 @@ public class Player : MonoBehaviour
         UpdateGround();
         UpdateLooking();
 
-        if (Crouching)
+        if (Input.Crouching)
             UpdateCollider(CrouchingHeight);
-        else UpdateCollider(StandingHeight);
+        else if (CanStandUp) UpdateCollider(StandingHeight);
 
         if (GroundSurface != Vector3.zero)
         {
-            if (Crouching)
+            if (Input.Crouching || !CanStandUp)
             {
                 UpdateMoving(CrouchingSpeed);
 
