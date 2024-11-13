@@ -109,7 +109,7 @@ public class Player : MonoBehaviour
 
         var acceleration = (((direction * speed) - horizontalVelocity).normalized.Dot(direction) + 1) / 2 * FallingAcceleration;
 
-        horizontalVelocity = horizontalVelocity.MoveTowards(direction * speed, acceleration * Time.deltaTime);
+        horizontalVelocity = horizontalVelocity.MoveTowards(direction * speed, acceleration);
 
         Velocity = horizontalVelocity + verticalVelocity;
     }
@@ -143,19 +143,19 @@ public class Player : MonoBehaviour
 
         var verticalVelocity = Velocity - horizontalVelocity;
 
-        horizontalVelocity = horizontalVelocity.MoveTowards(direction * speed, Acceleration * Time.deltaTime);
+        horizontalVelocity = horizontalVelocity.MoveTowards(direction * speed, Acceleration);
 
         Velocity = horizontalVelocity + verticalVelocity;
     }
 
     private void UpdateGravity()
     {
-        Velocity.y += (float)(Gravity * Math.Pow(Time.deltaTime, 2));
+        Velocity.y += (float)(Gravity * Time.deltaTime);
     }
 
     private void UpdatePosition()
     {
-        Controller.Move(Velocity);
+        Controller.Move(Velocity * Time.deltaTime);
     }
 
     private void UpdateCollider(float height)
