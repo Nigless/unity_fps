@@ -10,6 +10,11 @@ namespace ExtensionMethods
             return Vector3.Lerp(from, to, by);
         }
 
+        public static Vector3 MoveTowards(this Vector3 from, Vector3 to, float by)
+        {
+            return Vector3.MoveTowards(from, to, by);
+        }
+
         public static float Dot(this Vector3 lhs, Vector3 rhs)
         {
             return Vector3.Dot(lhs, rhs);
