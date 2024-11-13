@@ -8,8 +8,6 @@ using UnityEditor;
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerInput))]
-[RequireComponent(typeof(CharacterController))]
-[RequireComponent(typeof(Velocity))]
 public class Player : MonoBehaviour
 {
     public GameObject Head;
@@ -25,21 +23,23 @@ public class Player : MonoBehaviour
     public float CrouchingHeight = 1f;
     public float CrouchingJumpHeight = 0.02f;
     public float CrouchingTransition = 1f;
+    public float SlopeLimit = 1f;
+    public float SkinWidth = 0.01f;
 
     private PlayerInput Input;
-    private CharacterController Controller;
-    private Velocity Velocity;
+    private Rigidbody Body;
+    private CapsuleCollider Collider;
     private Vector3 Gravity = Vector3.down * 9.81f;
-    private Vector3 GroundSurface = Vector3.zero;
+    public Vector3 GroundSurface = Vector3.zero;
     private float DistanceToGround = 0;
     private float DistanceToCelling = 0;
-    private bool CanStandUp => DistanceToGround + DistanceToCelling + Controller.radius * 2 > StandingHeight + Controller.skinWidth * 2;
+    private bool CanStandUp => DistanceToGround + DistanceToCelling + Collider.radius * 2 > StandingHeight;
 
     private void Awake()
     {
         Input = GetComponent<PlayerInput>();
-        Controller = GetComponent<CharacterController>();
-        Velocity = GetComponent<Velocity>();
+        Body = GetComponent<Rigidbody>();
+        Collider = GetComponent<CapsuleCollider>();
     }
 
     private void Start()
@@ -49,10 +49,10 @@ public class Player : MonoBehaviour
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        if (hit.normal.Dot(Velocity.Momentum.normalized) >= 0)
+        if (hit.normal.Dot(Body.velocity.normalized) >= 0)
             return;
 
-        Velocity.Momentum = Vector3.ProjectOnPlane(Velocity.Momentum, hit.normal);
+        Body.velocity = Vector3.ProjectOnPlane(Body.velocity, hit.normal);
     }
 
     private void Update()
@@ -88,23 +88,21 @@ public class Player : MonoBehaviour
             if (Input.Moving != Vector2.zero)
                 UpdateFalling(FallingSpeed);
         }
-
-        UpdateGravity();
     }
 
     private void UpdateFalling(float speed)
     {
         var direction = (transform.rotation * new Vector3(Input.Moving.x, 0f, Input.Moving.y)).normalized;
 
-        var horizontalVelocity = Vector3.ProjectOnPlane(Velocity.Momentum, Gravity);
+        var horizontalVelocity = Vector3.ProjectOnPlane(Body.velocity, Gravity);
 
-        var verticalVelocity = Velocity.Momentum - horizontalVelocity;
+        var verticalVelocity = Body.velocity - horizontalVelocity;
 
         var acceleration = (((direction * speed) - horizontalVelocity).normalized.Dot(direction) + 1) / 2 * FallingAcceleration;
 
         horizontalVelocity = horizontalVelocity.MoveTowards(direction * speed, acceleration);
 
-        Velocity.Momentum = horizontalVelocity + verticalVelocity;
+        Body.velocity = horizontalVelocity + verticalVelocity;
     }
 
     private void UpdateLooking()
@@ -125,7 +123,7 @@ public class Player : MonoBehaviour
 
     private void UpdateJumping(float jumpHigh)
     {
-        Velocity.Momentum = Velocity.Momentum.ProjectOnPlane(GroundSurface) + GroundSurface * jumpHigh;
+        Body.velocity = Body.velocity.ProjectOnPlane(GroundSurface) + GroundSurface * jumpHigh;
         gameObject.SendMessage("OnJump", null, SendMessageOptions.DontRequireReceiver);
     }
 
@@ -135,24 +133,19 @@ public class Player : MonoBehaviour
            * transform.rotation
            * new Vector3(Input.Moving.x, 0.0f, Input.Moving.y).normalized;
 
-        var horizontalVelocity = Vector3.ProjectOnPlane(Velocity.Momentum, GroundSurface);
+        var horizontalVelocity = Vector3.ProjectOnPlane(Body.velocity, GroundSurface);
 
-        var verticalVelocity = Velocity.Momentum - horizontalVelocity;
+        var verticalVelocity = Body.velocity - horizontalVelocity;
 
         horizontalVelocity = horizontalVelocity.MoveTowards(direction * speed, Acceleration);
 
-        Velocity.Momentum = horizontalVelocity + verticalVelocity;
-    }
-
-    private void UpdateGravity()
-    {
-        Velocity.Momentum += Gravity * Time.deltaTime;
+        Body.velocity = horizontalVelocity + verticalVelocity;
     }
 
     private void UpdateCollider(float height)
     {
 
-        if (Controller.height == height)
+        if (Collider.height == height)
         {
             return;
         }
@@ -161,18 +154,16 @@ public class Player : MonoBehaviour
 
         var headPosition = Head.transform.localPosition;
 
-        headPosition.y = headPosition.y.Lerp(height / 2 - Controller.radius, transition);
+        headPosition.y = headPosition.y.Lerp(height / 2 - Collider.radius, transition);
 
-        var currentHeight = Controller.height;
+        var currentHeight = Collider.height;
 
-        Controller.height = currentHeight.Lerp(height, transition);
+        Collider.height = currentHeight.Lerp(height, transition);
 
-        if (DistanceToGround < Controller.height / 2 - Controller.radius + Controller.skinWidth + 0.1f)
+        if (DistanceToGround < currentHeight / 2 - Collider.radius + SkinWidth)
         {
-            var heightDiff = (Controller.height - currentHeight) / 2;
-            Controller.minMoveDistance = 0;
-            Controller.Move(Vector3.up * heightDiff);
-            Controller.minMoveDistance = 0.001f;
+            var heightDiff = (Collider.height - currentHeight) / 2;
+            transform.position += Vector3.up * heightDiff;
         }
 
         Head.transform.localPosition = headPosition;
@@ -180,13 +171,13 @@ public class Player : MonoBehaviour
 
     private void UpdateCelling()
     {
-        var distance = StandingHeight - Controller.height / 2 - Controller.radius + Controller.skinWidth + 0.1f;
+        var distance = StandingHeight - Collider.height / 2 - Collider.radius + SkinWidth;
 
         RaycastHit hit;
 
         if (Physics.SphereCast(
               transform.position,
-              Controller.radius,
+              Collider.radius,
               transform.up,
               out hit,
               distance
@@ -202,13 +193,13 @@ public class Player : MonoBehaviour
 
     private void UpdateGround()
     {
-        var distance = StandingHeight - Controller.height / 2 - Controller.radius + Controller.skinWidth + 0.1f;
+        var distance = StandingHeight - Collider.height / 2 - Collider.radius + SkinWidth;
 
         RaycastHit hit;
 
         if (!Physics.SphereCast(
               transform.position,
-              Controller.radius,
+              Collider.radius,
               -transform.up,
               out hit,
               distance
@@ -222,8 +213,8 @@ public class Player : MonoBehaviour
         DistanceToGround = hit.distance;
 
         if (
-            hit.distance < Controller.height / 2 - Controller.radius + 0.1f
-            && Vector3.Angle(hit.normal, Vector3.up) < Controller.slopeLimit
+            hit.distance < Collider.height / 2 - Collider.radius + 0.1f
+            && Vector3.Angle(hit.normal, Vector3.up) < SlopeLimit
             )
         {
             GroundSurface = hit.normal;

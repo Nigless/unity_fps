@@ -5,9 +5,9 @@ class JumpPad : MonoBehaviour
 {
     public float Force = 5;
 
-    private void OnHit(GameObject obj)
+    private void OnCollisionEnter(Collision collision)
     {
-        var body = obj.GetComponent<Rigidbody>();
+        var body = collision.gameObject.GetComponent<Rigidbody>();
 
         if (body != null)
         {
@@ -15,18 +15,6 @@ class JumpPad : MonoBehaviour
                 body.velocity = Vector3.ProjectOnPlane(body.velocity, transform.up);
 
             body.velocity += transform.up * Force;
-            return;
-        }
-
-
-        var velocity = obj.GetComponent<Velocity>();
-
-        if (velocity != null)
-        {
-            if (transform.up.Dot(velocity.Momentum.normalized) >= 0)
-                velocity.Momentum = Vector3.ProjectOnPlane(velocity.Momentum, transform.up);
-
-            velocity.Momentum += transform.up * Force;
             return;
         }
     }
