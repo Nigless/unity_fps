@@ -9,11 +9,11 @@ using UnityEngine;
 
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Velocity))]
 public class Player : MonoBehaviour
 {
     public GameObject Head;
     public float MouseSensitivity = 0.1f;
-    public float SlideSlopeLimit = 45;
     public float RunningSpeed = 0.05f;
     public float WalkingSpeed = 0.02f;
     public float FallingSpeed = 0.015f;
@@ -28,17 +28,18 @@ public class Player : MonoBehaviour
 
     private PlayerInput Input;
     private CharacterController Controller;
-    private float Gravity = -9.81f;
+    private Velocity Velocity;
+    private Vector3 Gravity = Vector3.down * 9.81f;
     private Vector3 GroundSurface = Vector3.zero;
     private float DistanceToGround = 0;
     private float DistanceToCelling = 0;
-    private Vector3 Velocity = new();
     private bool CanStandUp => DistanceToGround + DistanceToCelling + Controller.radius * 2 > StandingHeight + Controller.skinWidth * 2;
 
     private void Awake()
     {
         Input = GetComponent<PlayerInput>();
         Controller = GetComponent<CharacterController>();
+        Velocity = GetComponent<Velocity>();
     }
 
     private void Start()
@@ -48,10 +49,10 @@ public class Player : MonoBehaviour
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        if (hit.normal.Dot(Velocity.normalized) >= 0)
+        if (hit.normal.Dot(Velocity.Momentum.normalized) >= 0)
             return;
 
-        Velocity = Vector3.ProjectOnPlane(Velocity, hit.normal);
+        Velocity.Momentum = Vector3.ProjectOnPlane(Velocity.Momentum, hit.normal);
     }
 
     private void Update()
@@ -81,37 +82,29 @@ public class Player : MonoBehaviour
 
                 if (Input.Jumping) UpdateJumping(JumpHeight);
             }
-
-            if (Input.Jumping)
-                Input.OnJump();
-            else if (Vector3.Angle(GroundSurface, Vector3.up) > SlideSlopeLimit)
-                UpdateGravity();
-
         }
         else
         {
             if (Input.Moving != Vector2.zero)
                 UpdateFalling(FallingSpeed);
-
-            UpdateGravity();
         }
 
-        UpdatePosition();
+        UpdateGravity();
     }
 
     private void UpdateFalling(float speed)
     {
         var direction = (transform.rotation * new Vector3(Input.Moving.x, 0f, Input.Moving.y)).normalized;
 
-        var horizontalVelocity = new Vector3(Velocity.x, 0f, Velocity.z);
+        var horizontalVelocity = Vector3.ProjectOnPlane(Velocity.Momentum, Gravity);
 
-        var verticalVelocity = Vector3.up * Velocity.y;
+        var verticalVelocity = Velocity.Momentum - horizontalVelocity;
 
         var acceleration = (((direction * speed) - horizontalVelocity).normalized.Dot(direction) + 1) / 2 * FallingAcceleration;
 
         horizontalVelocity = horizontalVelocity.MoveTowards(direction * speed, acceleration);
 
-        Velocity = horizontalVelocity + verticalVelocity;
+        Velocity.Momentum = horizontalVelocity + verticalVelocity;
     }
 
     private void UpdateLooking()
@@ -132,30 +125,28 @@ public class Player : MonoBehaviour
 
     private void UpdateJumping(float jumpHigh)
     {
-        Velocity += GroundSurface * jumpHigh;
+        Velocity.Momentum = Velocity.Momentum.ProjectOnPlane(GroundSurface) + GroundSurface * jumpHigh;
+        gameObject.SendMessage("OnJump", null, SendMessageOptions.DontRequireReceiver);
     }
 
     private void UpdateMoving(float speed)
     {
-        var direction = Vector3.ProjectOnPlane((transform.rotation * new Vector3(Input.Moving.x, 0.0f, Input.Moving.y)).normalized, GroundSurface);
+        var direction = Quaternion.FromToRotation(Vector3.up, GroundSurface)
+           * transform.rotation
+           * new Vector3(Input.Moving.x, 0.0f, Input.Moving.y).normalized;
 
-        var horizontalVelocity = Vector3.ProjectOnPlane(Velocity, GroundSurface);
+        var horizontalVelocity = Vector3.ProjectOnPlane(Velocity.Momentum, GroundSurface);
 
-        var verticalVelocity = Velocity - horizontalVelocity;
+        var verticalVelocity = Velocity.Momentum - horizontalVelocity;
 
         horizontalVelocity = horizontalVelocity.MoveTowards(direction * speed, Acceleration);
 
-        Velocity = horizontalVelocity + verticalVelocity;
+        Velocity.Momentum = horizontalVelocity + verticalVelocity;
     }
 
     private void UpdateGravity()
     {
-        Velocity.y += (float)(Gravity * Time.deltaTime);
-    }
-
-    private void UpdatePosition()
-    {
-        Controller.Move(Velocity * Time.deltaTime);
+        Velocity.Momentum += Gravity * Time.deltaTime;
     }
 
     private void UpdateCollider(float height)

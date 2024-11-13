@@ -24,5 +24,10 @@ namespace ExtensionMethods
         {
             return Vector3.Angle(from, to);
         }
+
+        public static Vector3 ProjectOnPlane(this Vector3 from, Vector3 to)
+        {
+            return Vector3.ProjectOnPlane(from, to);
+        }
     }
 }
